@@ -1,4 +1,13 @@
 asgiref==3.9.1
 Django==5.2.6
+django-stubs==5.2.2
+django-stubs-ext==5.2.2
+mypy==1.17.1
+mypy_extensions==1.1.0
+pathspec==0.12.1
 python-dotenv==1.1.1
+safeboda @ file:///Users/pelin/PycharmProjects/safeboda
 sqlparse==0.5.3
+types-python-dateutil==2.9.0.20250822
+types-PyYAML==6.0.12.20250822
+typing_extensions==4.15.0
