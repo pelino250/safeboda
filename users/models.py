@@ -7,7 +7,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.fields import EmailField, CharField, BooleanField, DateTimeField
 from django.utils import timezone
-
+from django.core.exceptions import ValidationError
 
 
 
@@ -87,10 +87,23 @@ class User(AbstractBaseUser, PermissionsMixin):
 # TODO: Complete the Passenger model implementation
 class Passenger(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='passenger_profile')
-    # Additional fields
+    passenger_id = models.CharField(max_length=10, unique=True)
+    preferred_payment_method = models.CharField(max_length=10, default='momo')
+    home_address = models.TextField(max_length=100)
+
 
     def __str__(self):
         return f"Passenger: {self.user.email}"
+
+
+    def clean(self):
+        if self.user.user_type != 'passenger':
+            raise ValidationError('User is not a passenger')
+
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
 
 #  TODO: Complete the Rider model implementation
