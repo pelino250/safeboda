@@ -2,6 +2,7 @@ asgiref==3.9.1
 Django==5.2.6
 django-stubs==5.2.2
 django-stubs-ext==5.2.2
+djangorestframework==3.16.1
 mypy==1.17.1
 mypy_extensions==1.1.0
 pathspec==0.12.1
