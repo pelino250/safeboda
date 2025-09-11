@@ -36,9 +36,9 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
 
-        if extra_fields.get('is_staff'):
+        if not extra_fields.get('is_staff'):
             raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser'):
+        if not extra_fields.get('is_superuser'):
             raise ValueError('Superuser must have is_superuser=True.')
         return self.create_user(email, password, **extra_fields)
 
@@ -60,7 +60,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_type: CharField = models.CharField(max_length=20, choices=USER_TYPES)
     phone_number: CharField = models.CharField(
         max_length=15,
-        unique=True,
+        null=True,
+        blank=True,
         validators=[RegexValidator(r'^\+?1?\d{9,15}$')]
     )
 
@@ -81,3 +82,24 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+# TODO: Complete the Passenger model implementation
+class Passenger(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='passenger_profile')
+    # Additional fields
+
+    def __str__(self):
+        return f"Passenger: {self.user.email}"
+
+
+#  TODO: Complete the Rider model implementation
+class Rider(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='rider_profile')
+
+    def __str__(self):
+        return f"Rider: {self.user.email}"
+
+
+
+
