@@ -9,12 +9,16 @@ A Django-based ride-sharing platform similar to SafeBoda, designed to connect pa
 - **Phone Number Validation**: Integrated phone number validation with regex patterns
 - **Admin Interface**: Django admin panel for user management
 - **Environment Configuration**: Secure configuration using environment variables
+- **Redis Caching**: High-performance caching for API endpoints using Redis
+- **REST API**: Django REST Framework endpoints for users, passengers, and riders
+- **Dummy Data Generation**: Management command to populate database with test data
 
 ## Requirements
 
 - Python 3.8+
 - Django 5.2.6
 - SQLite (default database)
+- Redis server (for caching)
 
 ## Dependencies
 
@@ -22,9 +26,14 @@ The project uses the following Python packages:
 
 ```
 Django==5.2.6
+djangorestframework==3.16.1
+redis==5.0.1
+django-redis==5.4.0
 python-dotenv==1.1.1
+pillow==11.3.0
 asgiref==3.9.1
 sqlparse==0.5.3
+mypy==1.17.1
 ```
 
 ## Installation
@@ -41,12 +50,31 @@ sqlparse==0.5.3
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies**
+3. **Install Redis Server**
+   
+   **On macOS (using Homebrew):**
+   ```bash
+   brew install redis
+   brew services start redis
+   ```
+   
+   **On Ubuntu/Debian:**
+   ```bash
+   sudo apt update
+   sudo apt install redis-server
+   sudo systemctl start redis-server
+   sudo systemctl enable redis-server
+   ```
+   
+   **On Windows:**
+   Download and install Redis from the official website or use WSL.
+
+4. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Environment Configuration**
+5. **Environment Configuration**
    
    Copy the `.env` file and update the values:
    ```bash
@@ -71,7 +99,25 @@ sqlparse==0.5.3
    python manage.py createsuperuser
    ```
 
-7. **Run the Development Server**
+7. **Populate Database with Dummy Data (Optional)**
+   
+   To test the application with sample data and Redis caching functionality:
+   ```bash
+   python manage.py populate_dummy_data
+   ```
+   
+   You can also specify custom counts:
+   ```bash
+   python manage.py populate_dummy_data --users 100 --passengers 60 --riders 40
+   ```
+   
+   This will create:
+   - Test users with realistic data
+   - Passenger profiles with various preferences and locations
+   - Rider profiles with different verification statuses and locations
+   - Data suitable for testing Redis caching on the `/api/riders/available_riders/` endpoint
+
+8. **Run the Development Server**
    ```bash
    python manage.py runserver
    ```
@@ -82,6 +128,21 @@ sqlparse==0.5.3
 
 - **Development Server**: http://127.0.0.1:8000/
 - **Admin Panel**: http://127.0.0.1:8000/admin/
+- **API Root**: http://127.0.0.1:8000/api/
+
+### API Endpoints
+
+The application provides REST API endpoints for:
+
+- **Users**: `/api/users/`
+- **Passengers**: `/api/passengers/`
+- **Riders**: `/api/riders/`
+
+Key endpoints include:
+- `GET /api/riders/available_riders/` - Get available riders (cached with Redis)
+- `GET /api/passengers/my_profile/` - Get current user's passenger profile
+- `GET /api/riders/my_profile/` - Get current user's rider profile
+- `PATCH /api/riders/{id}/update_location/` - Update rider location
 
 ### User Types
 
@@ -138,6 +199,27 @@ The application uses the following environment variables:
 ### Database
 
 The project is configured to use SQLite by default. The database file `db.sqlite3` will be created in the project root after running migrations.
+
+### Redis Caching
+
+The application implements Redis caching for improved performance:
+
+- **Cache Backend**: django-redis with Redis server
+- **Cache Location**: `redis://127.0.0.1:6379/1`
+- **Cached Endpoints**: 
+  - `/api/riders/available_riders/` - Cached for 5 minutes (300 seconds)
+- **Cache Invalidation**: Automatic cache clearing when rider location is updated
+- **Benefits**: Reduces database queries for frequently accessed data
+
+To verify Redis is working:
+```bash
+# Check if Redis is running
+redis-cli ping
+# Should return "PONG"
+
+# Monitor cache operations (optional)
+redis-cli monitor
+```
 
 ## Development
 
