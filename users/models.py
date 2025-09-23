@@ -84,12 +84,25 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+
+PREFERRED_PAYMENT_METHODS = (
+    ('momo', 'Momo'),
+    ('cash', 'Cash'),
+    ('card', 'Card'),
+)
 # TODO: Complete the Passenger model implementation
 class Passenger(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='passenger_profile')
     passenger_id = models.CharField(max_length=10, unique=True)
     preferred_payment_method = models.CharField(max_length=10, default='momo')
     home_address = models.TextField(max_length=100)
+    profile_picture = models.ImageField(upload_to='passenger_profile_pictures/', null=True, blank=True)
+    preferred_language = models.CharField(max_length=30, default='en')
+    emergency_contact = models.CharField(max_length=15, null=True, blank=True, validators=[RegexValidator(r'^\+?1?\d{9,15}$')])
+    is_verified = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
     def __str__(self):
@@ -106,9 +119,29 @@ class Passenger(models.Model):
         super().save(*args, **kwargs)
 
 
+VERIFICATION_STATUS_CHOICES = (
+    ('pending', 'Pending'),
+    ('approved', 'Approved'),
+    ('rejected', 'Rejected'),
+    ('suspended', 'Suspended'),
+)
+
 #  TODO: Complete the Rider model implementation
 class Rider(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='rider_profile')
+    profile_picture = models.ImageField(upload_to='rider_profile_pictures/', null=True, blank=True)
+    license_number = models.CharField(max_length=10, unique=True)
+    license_picture = models.ImageField(upload_to='rider_license_pictures/', null=True, blank=True)
+    id_number_picture = models.ImageField(upload_to='rider_id_pictures/', null=True, blank=True)
+    verification_status = models.CharField(max_length=20, default='pending')
+    verification_notes = models.TextField(null=True, blank=True)
+    is_available = models.BooleanField(default=True)
+    current_latitude = models.CharField(max_length=100, null=True, blank=True)
+    current_longitude = models.CharField(max_length=100, null=True, blank=True)
+    average_rating = models.FloatField(default=0.0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Rider: {self.user.email}"

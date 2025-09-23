@@ -6,7 +6,10 @@ djangorestframework==3.16.1
 mypy==1.17.1
 mypy_extensions==1.1.0
 pathspec==0.12.1
+pillow==11.3.0
 python-dotenv==1.1.1
+redis==5.0.1
+django-redis==5.4.0
 safeboda @ file:///Users/pelin/PycharmProjects/safeboda
 sqlparse==0.5.3
 types-python-dateutil==2.9.0.20250822
