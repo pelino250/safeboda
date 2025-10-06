@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import ClassVar, Any
+import secrets
 
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
@@ -71,6 +72,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff: BooleanField = models.BooleanField(default=False)
     is_active: BooleanField = models.BooleanField(default=True)
     date_joined: DateTimeField = models.DateTimeField(default=timezone.now)
+
+    # Verification fields
+    phone_verified: BooleanField = models.BooleanField(default=False)
+    email_verified: BooleanField = models.BooleanField(default=False)
+    is_account_locked: BooleanField = models.BooleanField(default=False)
+    account_locked_until: DateTimeField = models.DateTimeField(null=True, blank=True)
 
     created_at: DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: DateTimeField = models.DateTimeField(auto_now=True)
@@ -147,5 +154,85 @@ class Rider(models.Model):
         return f"Rider: {self.user.email}"
 
 
+class VerificationCode(models.Model):
+    """
+    Model to store OTP verification codes for phone and email verification.
+    """
+    VERIFICATION_TYPES = (
+        ('phone', 'Phone'),
+        ('email', 'Email'),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='verification_codes')
+    code = models.CharField(max_length=6)
+    verification_type = models.CharField(max_length=10, choices=VERIFICATION_TYPES)
+    is_used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.verification_type} - {self.code}"
+
+    def is_valid(self):
+        """Check if the code is still valid (not expired and not used)"""
+        return not self.is_used and timezone.now() < self.expires_at
+
+    @classmethod
+    def generate_code(cls, user, verification_type, expiry_minutes=10):
+        """Generate a new 6-digit verification code"""
+        code = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+        expires_at = timezone.now() + timedelta(minutes=expiry_minutes)
+        return cls.objects.create(
+            user=user,
+            code=code,
+            verification_type=verification_type,
+            expires_at=expires_at
+        )
+
+
+class PasswordResetToken(models.Model):
+    """
+    Model to store password reset tokens.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reset_tokens')
+    token = models.CharField(max_length=64, unique=True)
+    is_used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - Reset Token"
+
+    def is_valid(self):
+        """Check if the token is still valid (not expired and not used)"""
+        return not self.is_used and timezone.now() < self.expires_at
+
+    @classmethod
+    def generate_token(cls, user, expiry_hours=24):
+        """Generate a new password reset token"""
+        token = secrets.token_urlsafe(48)
+        expires_at = timezone.now() + timedelta(hours=expiry_hours)
+        return cls.objects.create(
+            user=user,
+            token=token,
+            expires_at=expires_at
+        )
+
+
+class District(models.Model):
+    """
+    Model to store Rwanda districts for registration.
+    """
+    name = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=10, unique=True)
+    province = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} - {self.province}"
 
 
