@@ -1,0 +1,9 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=PyCharm
+
+###
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=PyCharm
+    &param1=value1
+    &param2=value2

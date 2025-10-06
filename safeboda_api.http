@@ -1,5 +1,15 @@
-### GET request to example server
-GET http://localhost:8000/api/users
-
 ###
-GET http://localhost:8000/api/users/1
+GET http://localhost:8000/api/v1/passengers/
+Authorization: Basic dGVzdEBhZG1pbi5jb206QWRtaW5AMTIzNDU=
+Content-Type: application/json
+
+
+### GitHub API Example
+GET https://api.github.com/users/iPelino
+Accept: application/vnd.github.v3+json
+
+
+### GitHub API - repos list
+POST https://api.github.com/users/iPelino/repos
+Accept: application/vnd.github.v3+json
+

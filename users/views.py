@@ -3,6 +3,7 @@ from django.core.cache import cache
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 
 from users.models import User, Passenger, Rider
 from users.serializers import UserSerializer, PassengerSerializer, RiderSerializer
@@ -25,13 +26,15 @@ class PassengerViewSet(viewsets.ModelViewSet):
     """
     queryset = Passenger.objects.all()
     serializer_class = PassengerSerializer
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
     def get_queryset(self):
         """
         Filter passengers based on user permissions.
         Regular users can only see their own passenger profile.
         """
+        if not self.request.user.is_authenticated:
+            return Passenger.objects.none()
         if self.request.user.is_staff:
             return Passenger.objects.all()
         return Passenger.objects.filter(user=self.request.user)
@@ -40,6 +43,8 @@ class PassengerViewSet(viewsets.ModelViewSet):
         """
         Associate the passenger with the current user.
         """
+        if not self.request.user.is_authenticated:
+            raise PermissionDenied("Authentication required to create passenger profile.")
         serializer.save(user=self.request.user)
     
     @action(detail=False, methods=['get'])
@@ -47,13 +52,15 @@ class PassengerViewSet(viewsets.ModelViewSet):
         """
         Get the current user's passenger profile.
         """
+        if not request.user.is_authenticated:
+            raise PermissionDenied("Authentication required to access profile.")
         try:
             passenger = Passenger.objects.get(user=request.user)
             serializer = self.get_serializer(passenger)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Passenger.DoesNotExist:
             return Response(
-                {'error': 'Passenger profile not found'}, 
+                {'error': 'Passenger profile not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -73,6 +80,8 @@ class RiderViewSet(viewsets.ModelViewSet):
         Regular users can only see their own rider profile.
         Staff can see all riders.
         """
+        if not self.request.user.is_authenticated:
+            return Rider.objects.none()
         if self.request.user.is_staff:
             return Rider.objects.all()
         return Rider.objects.filter(user=self.request.user)
@@ -81,6 +90,8 @@ class RiderViewSet(viewsets.ModelViewSet):
         """
         Associate the rider with the current user.
         """
+        if not self.request.user.is_authenticated:
+            raise PermissionDenied("Authentication required to create rider profile.")
         serializer.save(user=self.request.user)
     
     @action(detail=False, methods=['get'])
@@ -88,13 +99,15 @@ class RiderViewSet(viewsets.ModelViewSet):
         """
         Get the current user's rider profile.
         """
+        if not request.user.is_authenticated:
+            raise PermissionDenied("Authentication required to access profile.")
         try:
             rider = Rider.objects.get(user=request.user)
             serializer = self.get_serializer(rider)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Rider.DoesNotExist:
             return Response(
-                {'error': 'Rider profile not found'}, 
+                {'error': 'Rider profile not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
     
@@ -106,46 +119,48 @@ class RiderViewSet(viewsets.ModelViewSet):
         """
         cache_key = 'available_riders'
         cached_data = cache.get(cache_key)
-        
+
         if cached_data is not None:
-            return Response(cached_data)
-        
+            return Response(cached_data, status=status.HTTP_200_OK)
+
         available_riders = Rider.objects.filter(
-            is_available=True, 
+            is_available=True,
             verification_status='approved'
         )
         serializer = self.get_serializer(available_riders, many=True)
-        
+
         # Cache for 5 minutes (300 seconds)
         cache.set(cache_key, serializer.data, 300)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['patch'])
     def update_location(self, request, pk=None):
         """
         Update rider's current location.
         """
+        if not request.user.is_authenticated:
+            raise PermissionDenied("Authentication required to update location.")
         rider = self.get_object()
         if rider.user != request.user and not request.user.is_staff:
             return Response(
-                {'error': 'Permission denied'}, 
+                {'error': 'Permission denied'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         latitude = request.data.get('current_latitude')
         longitude = request.data.get('current_longitude')
-        
+
         if latitude is not None:
             rider.current_latitude = latitude
         if longitude is not None:
             rider.current_longitude = longitude
-            
+
         rider.save()
-        
+
         # Clear available riders cache when location is updated
         cache.delete('available_riders')
-        
+
         serializer = self.get_serializer(rider)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 

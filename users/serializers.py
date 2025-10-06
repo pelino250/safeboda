@@ -31,6 +31,6 @@ class RiderSerializer(serializers.ModelSerializer):
             'id', 'user', 'profile_picture', 'license_number', 'license_picture',
             'id_number_picture', 'verification_status', 'verification_notes',
             'is_available', 'current_latitude', 'current_longitude', 
-            'average_rating', 'total_rides', 'total_earnings', 'created_at', 'updated_at'
+            'average_rating', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'average_rating', 'total_rides', 'total_earnings', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'average_rating', 'created_at', 'updated_at']
