@@ -1,6 +1,7 @@
 """
 Authentication views for user registration, verification, and password management.
 """
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -31,7 +32,7 @@ class RegisterView(APIView):
     User registration endpoint.
     """
     permission_classes = [permissions.AllowAny]
-
+    @extend_schema(request=UserRegistrationSerializer, responses={201: UserRegistrationSerializer}, description="Register a new user")
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -114,7 +115,7 @@ class VerifyEmailView(APIView):
     Email verification endpoint.
     """
     permission_classes = [permissions.AllowAny]
-
+    @extend_schema(request=EmailVerificationSerializer, responses={201: EmailVerificationSerializer}, description="Verify email")
     def post(self, request):
         serializer = EmailVerificationSerializer(data=request.data)
         if not serializer.is_valid():
