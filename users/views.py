@@ -8,6 +8,8 @@ from rest_framework.exceptions import PermissionDenied
 from users.models import User, Passenger, Rider
 from users.serializers import UserSerializer, PassengerSerializer, RiderSerializer
 
+from .permissions import IsRiderRole
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -16,7 +18,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsRiderRole]
 
 
 class PassengerViewSet(viewsets.ModelViewSet):
